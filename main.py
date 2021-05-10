@@ -9,7 +9,7 @@ import os.path
 import math
 
 img = []
-filter_type = ['No filter', 'blur faces', 'blur eyes', 'contour', 'gray']
+filter_type = ['no filter', 'blur faces', 'blur eyes', 'contour', 'gray']
 filter_index = 0
 
 
@@ -47,11 +47,10 @@ def setGray(image):
 
 def setContour(image):
     img_copy = image.copy()
-    img_gray = setGray(image)
-    edged = cv2.Canny(img_gray, 50, 150)
-    dilate = cv2.dilate(edged, None, iterations=1)
-    erode = cv2.erode(dilate, None, iterations=1)
-    return erode
+    min_contrast = 75
+    max_contrast = 150
+    img_contour = cv2.Canny(img_copy, min_contrast, max_contrast)
+    return img_contour
 
 
 def setBlur(image, faces):
