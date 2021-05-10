@@ -41,6 +41,10 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+<p align="center">
+    <img src="./img/demo.gif" width="750">
+</p>
+
 Development of an executable application of image filters in real time using OpenCV with Python
 
 The main features of this application are:
