@@ -9,7 +9,7 @@ import os.path
 import math
 
 img = []
-filter_type = ['no filter', 'blur faces', 'blur eyes', 'contour', 'gray']
+filter_type = ['no filter', 'blur faces', 'blur eyes', 'blur background', 'contour', 'gray']
 filter_index = 0
 
 
@@ -39,17 +39,34 @@ def getEyes(frame):
     return eyes
 
 
-def setGray(image):
+def setGray(image, faces):
     img_copy = image.copy()
-    img_gray = cv2.cvtColor(img_copy, cv2.COLOR_BGR2GRAY)
-    return img_gray
+    if(len(faces) > 0):
+        for face in faces:
+            x = face[0]
+            y = face[1]
+            w = face[2]
+            h = face[3]
+            mask = cv2.cvtColor(img_copy[y:y+h, x:x+w], cv2.COLOR_BGR2GRAY)
+            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+            img_copy[y:y+h, x:x+w] = mask
+    return img_copy
 
 
-def setContour(image):
-    img_copy = image.copy()
+def setContour(image, faces):
+    img_contour = image.copy()
     min_contrast = 75
     max_contrast = 150
-    img_contour = cv2.Canny(img_copy, min_contrast, max_contrast)
+    if(len(faces) > 0):
+        for face in faces:
+            x = face[0]
+            y = face[1]
+            w = face[2]
+            h = face[3]
+            face_gray = cv2.cvtColor(img_contour[y:y+h, x:x+w], cv2.COLOR_BGR2GRAY)
+            mask = cv2.Canny(face_gray, min_contrast, max_contrast)
+            mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+            img_contour[y:y+h, x:x+w] = mask
     return img_contour
 
 
@@ -66,6 +83,23 @@ def setBlur(image, faces):
             img_copy[y:y+h, x:x+w] = blur
     return img_copy
 
+def setBackgroundBlur(image, faces):
+    img_copy = image.copy()
+    mask = np.ones((img_copy.shape[0], img_copy.shape[1], 3), dtype="uint8")
+    if(len(faces) > 0):
+        for face in faces:
+            x = face[0]
+            y = face[1]
+            w = face[2]
+            h = face[3]
+            ROI = img_copy
+            face_image = img_copy[y:y+h, x:x+w]
+
+            blur = cv2.GaussianBlur(ROI, (71, 71), 0)
+            blur[y:y+h, x:x+w] = face_image
+
+            img_copy = blur
+    return img_copy
 
 def main():
     global img, filter_type, filter_index
@@ -94,14 +128,19 @@ def main():
 
             filter_selected = filter_type[filter_index]
 
-            if(filter_selected == 'contour'):
-                img = setContour(frame)
-            elif(filter_selected == 'gray'):
-                img = setGray(frame)
-            elif(len(faces) > 0 and filter_selected == 'blur faces'):
-                img = setBlur(frame, faces)
-            elif(len(eyes) > 0 and filter_selected == 'blur eyes'):
-                img = setBlur(frame, eyes)
+            if(len(faces) > 0):
+                if(filter_selected == 'contour'):
+                    img = setContour(frame, faces)
+                elif(filter_selected == 'gray'):
+                    img = setGray(frame, faces)
+                elif(filter_selected == 'blur faces'):
+                    img = setBlur(frame, faces)
+                elif(filter_selected == 'blur eyes'):
+                    img = setBlur(frame, eyes)
+                elif(filter_selected == 'blur background'):
+                    img = setBackgroundBlur(frame, faces)
+                else:
+                    img = frame.copy()
             else:
                 img = frame.copy()
 
@@ -134,7 +173,6 @@ def mouse_click(event, x, y, flags, param):
             filter_index += 1
         else:
             filter_index = 1
-
 
 if __name__ == "__main__":
     main()
