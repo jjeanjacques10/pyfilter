@@ -51,6 +51,7 @@ The main features of this application are:
 - No Filter
 - Blur Faces
 - Blur Eyes
+- Blur Background
 - Contour Filter
 - Gray Scale Filter
  
